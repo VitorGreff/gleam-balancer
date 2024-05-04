@@ -4,20 +4,23 @@ import gleam/list.{append, length}
 import gleam/string.{to_graphemes}
 
 pub fn main() {
-  let delimiters = build_delimiter_map()
-  let tokens = to_graphemes("[adawdas)]")
-  let stack: List(String) = []
-  io.debug(is_balanced(tokens, stack, delimiters))
+  to_graphemes("adawdas]")
+  |> is_balanced()
+  |> io.debug
 }
 
-pub fn build_delimiter_map() -> dict.Dict(String, String) {
+pub fn is_balanced(tokens: List(String)) -> Bool {
+  compute_string(tokens, [], build_delimiter_map())
+}
+
+fn build_delimiter_map() -> dict.Dict(String, String) {
   dict.new()
   |> insert("(", ")")
   |> insert("[", "]")
   |> insert("{", "}")
 }
 
-pub fn is_balanced(
+fn compute_string(
   tokens: List(String),
   stack: List(String),
   delimiters: Dict(String, String),
@@ -28,7 +31,7 @@ pub fn is_balanced(
       case has_key(delimiters, h) {
         True ->
           append([h], stack)
-          |> is_balanced(t, _, delimiters)
+          |> compute_string(t, _, delimiters)
         False ->
           case is_within_values(values(delimiters), h) {
             True ->
@@ -38,13 +41,13 @@ pub fn is_balanced(
                   case get(delimiters, top) {
                     Ok(end_delimiter) ->
                       case end_delimiter == h {
-                        True -> is_balanced(t, rest, delimiters)
+                        True -> compute_string(t, rest, delimiters)
                         False -> False
                       }
                     Error(_) -> False
                   }
               }
-            False -> is_balanced(t, stack, delimiters)
+            False -> compute_string(t, stack, delimiters)
           }
       }
   }
