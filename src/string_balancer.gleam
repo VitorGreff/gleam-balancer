@@ -24,37 +24,29 @@ pub fn is_balanced(
 ) -> Bool {
   case tokens {
     [] -> length(stack) == 0
-    [h, ..t] -> {
+    [h, ..t] ->
       case has_key(delimiters, h) {
-        True -> {
+        True ->
           append([h], stack)
           |> is_balanced(t, _, delimiters)
-        }
-        False -> {
+        False ->
           case is_within_values(values(delimiters), h) {
-            True -> {
+            True ->
               case stack {
                 [] -> False
-                [top, ..rest] -> {
+                [top, ..rest] ->
                   case get(delimiters, top) {
-                    Ok(end_delimiter) -> {
+                    Ok(end_delimiter) ->
                       case end_delimiter == h {
-                        True -> {
-                          is_balanced(t, rest, delimiters)
-                        }
+                        True -> is_balanced(t, rest, delimiters)
                         False -> False
                       }
-                    }
                     Error(_) -> False
                   }
-                }
               }
-            }
             False -> is_balanced(t, stack, delimiters)
           }
-        }
       }
-    }
   }
 }
 
