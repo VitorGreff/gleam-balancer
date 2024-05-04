@@ -1,70 +1,56 @@
-import gleam/dict.{get, has_key, insert, values}
+import gleam/dict.{type Dict, get, has_key, insert, values}
 import gleam/io
+import gleam/list.{append, length}
 import gleam/string.{to_graphemes}
-import stack.{peek, pop, push, stack_len}
 
 pub fn main() {
   let delimiters = build_delimiter_map()
-  let tokens = to_graphemes("[adawdas")
-  let s = stack.Stack([])
-  io.debug(is_balanced(delimiters, tokens, s))
+  let tokens = to_graphemes("[adawdas)]")
+  let stack: List(String) = []
+  io.debug(is_balanced(tokens, stack, delimiters))
 }
 
-fn build_delimiter_map() -> dict.Dict(String, String) {
+pub fn build_delimiter_map() -> dict.Dict(String, String) {
   dict.new()
   |> insert("(", ")")
   |> insert("[", "]")
   |> insert("{", "}")
 }
 
-fn is_balanced(
-  delimiters: dict.Dict(String, String),
+pub fn is_balanced(
   tokens: List(String),
-  s: stack.Stack(String),
+  stack: List(String),
+  delimiters: Dict(String, String),
 ) -> Bool {
   case tokens {
-    [] -> stack_len(s) == 0
+    [] -> length(stack) == 0
     [h, ..t] -> {
       case has_key(delimiters, h) {
-        // begin delimiter
         True -> {
-          s
-          |> push(h)
-          |> is_balanced(delimiters, t, _)
+          append([h], stack)
+          |> is_balanced(t, _, delimiters)
         }
         False -> {
           case is_within_values(values(delimiters), h) {
-            // end delimiter
             True -> {
-              case pop(s) {
-                Error(_) -> False
-                Ok(new_stack) -> {
-                  case peek(new_stack) {
-                    Error(_) -> False
-                    Ok(stack_top) -> {
-                      case get(delimiters, stack_top) {
-                        Ok(end_delimiter) -> {
-                          case end_delimiter == h {
-                            True -> {
-                              is_balanced(delimiters, t, new_stack)
-                            }
-                            False -> {
-                              False
-                            }
-                          }
+              case stack {
+                [] -> False
+                [top, ..rest] -> {
+                  case get(delimiters, top) {
+                    Ok(end_delimiter) -> {
+                      case end_delimiter == h {
+                        True -> {
+                          is_balanced(t, rest, delimiters)
                         }
-                        Error(_) -> {
-                          False
-                        }
+                        False -> False
                       }
                     }
+                    Error(_) -> False
                   }
                 }
               }
             }
-            False -> {
-              is_balanced(delimiters, t, s)
-            }
+            False -> is_balanced(t, stack, delimiters)
           }
         }
       }
